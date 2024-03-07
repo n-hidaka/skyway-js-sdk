@@ -1,54 +1,12 @@
 import {
-  nowInSec,
   P2PRoom,
   SfuRoom,
-  SkyWayAuthToken,
   SkyWayContext,
   SkyWayRoom,
   SkyWayStreamFactory,
-  uuidV4,
 } from '@skyway-sdk/room';
 
-import { appId, secret } from '../../../env';
-
-const token = new SkyWayAuthToken({
-  jti: uuidV4(),
-  iat: nowInSec(),
-  exp: nowInSec() + 60 * 60 * 24,
-  scope: {
-    app: {
-      id: appId,
-      turn: true,
-      actions: ['read'],
-      channels: [
-        {
-          id: '*',
-          name: '*',
-          actions: ['write'],
-          members: [
-            {
-              id: '*',
-              name: '*',
-              actions: ['write'],
-              publication: {
-                actions: ['write'],
-              },
-              subscription: {
-                actions: ['write'],
-              },
-            },
-          ],
-          sfuBots: [
-            {
-              actions: ['write'],
-              forwardings: [{ actions: ['write'] }],
-            },
-          ],
-        },
-      ],
-    },
-  },
-}).encode(secret);
+import { getToken } from './skyway-auth-token';
 
 void (async () => {
   const localVideo = document.getElementById(
@@ -78,6 +36,7 @@ void (async () => {
   video.attach(localVideo);
   await localVideo.play();
 
+  const token = await getToken('*', '*');
   const context = await SkyWayContext.Create(token, {
     log: { level: 'warn', format: 'object' },
   });
