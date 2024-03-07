@@ -8,7 +8,8 @@ import {
 } from '@skyway-sdk/room';
 import { FC, useEffect, useRef, useState } from 'react';
 
-import { contextOptions, sfuOptions, tokenString } from './const';
+import { contextOptions, sfuOptions } from './const';
+import { getToken } from './skyway-auth-token';
 
 const App: FC = () => {
   const [roomName, setRoomName] = useState('');
@@ -18,7 +19,8 @@ const App: FC = () => {
   >([]);
 
   const main = async () => {
-    const context = await SkyWayContext.Create(tokenString, contextOptions);
+    const token = await getToken('*', '*');
+    const context = await SkyWayContext.Create(token, contextOptions);
     const room = await SkyWayRoom.FindOrCreate(context, {
       name: roomName,
       type: 'sfu',
