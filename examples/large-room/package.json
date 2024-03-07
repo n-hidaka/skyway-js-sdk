@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "rm -rf node_modules/.vite && vite",
+    "transpile": "echo 'script to unify'",
     "build:example": "tsc && vite build",
     "preview": "rm -rf node_modules/.vite && vite preview",
     "type": "tsc --noEmit"
