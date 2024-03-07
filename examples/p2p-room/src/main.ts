@@ -1,56 +1,10 @@
 import {
-  nowInSec,
-  SkyWayAuthToken,
   SkyWayContext,
   SkyWayRoom,
   SkyWayStreamFactory,
-  uuidV4,
 } from '@skyway-sdk/room';
 
-import { appId, secret } from '../../../env';
-
-const token = new SkyWayAuthToken({
-  jti: uuidV4(),
-  iat: nowInSec(),
-  exp: nowInSec() + 60 * 60 * 24,
-  scope: {
-    app: {
-      id: appId,
-      turn: true,
-      actions: ['read'],
-      channels: [
-        {
-          id: '*',
-          name: '*',
-          actions: ['write'],
-          members: [
-            {
-              id: '*',
-              name: '*',
-              actions: ['write'],
-              publication: {
-                actions: ['write'],
-              },
-              subscription: {
-                actions: ['write'],
-              },
-            },
-          ],
-          sfuBots: [
-            {
-              actions: ['write'],
-              forwardings: [
-                {
-                  actions: ['write'],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  },
-}).encode(secret);
+import { getToken } from './skyway-auth-token';
 
 void (async () => {
   const localVideo = document.getElementById('local-video') as HTMLVideoElement;
@@ -80,6 +34,7 @@ void (async () => {
   joinButton.onclick = async () => {
     if (channelNameInput.value === '') return;
 
+    const token = await getToken('*', '*');
     const context = await SkyWayContext.Create(token);
     const channel = await SkyWayRoom.FindOrCreate(context, {
       type: 'p2p',
