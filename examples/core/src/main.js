@@ -1,72 +1,27 @@
 import {
-  nowInSec,
-  SkyWayAuthToken,
   SkyWayChannel,
   SkyWayContext,
-  SkyWayStreamFactory,
-  uuidV4,
-} from '@skyway-sdk/core';
+  SkyWayStreamFactory } from
+'@skyway-sdk/core';
 
-import { appId, secret } from '../../../env';
+import { getToken } from './skyway-auth-token';
 
-const token = new SkyWayAuthToken({
-  jti: uuidV4(),
-  iat: nowInSec(),
-  exp: nowInSec() + 60 * 60 * 24,
-  scope: {
-    app: {
-      id: appId,
-      turn: true,
-      actions: ['read'],
-      channels: [
-        {
-          id: '*',
-          name: '*',
-          actions: ['write'],
-          members: [
-            {
-              id: '*',
-              name: '*',
-              actions: ['write'],
-              publication: {
-                actions: ['write'],
-              },
-              subscription: {
-                actions: ['write'],
-              },
-            },
-          ],
-
-          sfuBots: [
-            {
-              actions: ['write'],
-              forwardings: [
-                {
-                  actions: ['write'],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  },
-}).encode(secret);
-
-(async () => {
+void (async () => {
   const localVideo = document.getElementById('local-video');
   const buttonArea = document.getElementById('button-area');
   const remoteMediaArea = document.getElementById('remote-media-area');
-  const channelNameInput = document.getElementById('channel-name');
-
-  const dataStreamInput = document.getElementById('data-stream');
-
+  const channelNameInput = document.getElementById(
+    'channel-name'
+  );
+  const dataStreamInput = document.getElementById(
+    'data-stream'
+  );
   const myId = document.getElementById('my-id');
   const joinButton = document.getElementById('join');
   const writeButton = document.getElementById('write');
 
   const { audio, video } =
-    await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
+  await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
   video.attach(localVideo);
   await localVideo.play();
 
@@ -79,9 +34,10 @@ const token = new SkyWayAuthToken({
   joinButton.onclick = async () => {
     if (channelNameInput.value === '') return;
 
+    const token = await getToken('*', '*');
     const context = await SkyWayContext.Create(token);
     const channel = await SkyWayChannel.FindOrCreate(context, {
-      name: channelNameInput.value,
+      name: channelNameInput.value
     });
     const me = await channel.join();
 
@@ -120,14 +76,14 @@ const token = new SkyWayAuthToken({
               remoteMediaArea.appendChild(elm);
             }
             break;
-          case 'data': {
-            const elm = document.createElement('div');
-            remoteMediaArea.appendChild(elm);
-            elm.innerText = 'data\n';
-            stream.onData.add((data) => {
-              elm.innerText += data + '\n';
-            });
-          }
+          case 'data':{
+              const elm = document.createElement('div');
+              remoteMediaArea.appendChild(elm);
+              elm.innerText = 'data\n';
+              stream.onData.add((data) => {
+                elm.innerText += data + '\n';
+              });
+            }
         }
       };
     };

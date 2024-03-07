@@ -1,73 +1,34 @@
 import {
-  nowInSec,
-  SkyWayAuthToken,
+
+
   SkyWayContext,
   SkyWayRoom,
-  SkyWayStreamFactory,
-  uuidV4,
-} from '@skyway-sdk/room';
+  SkyWayStreamFactory } from
+'@skyway-sdk/room';
 
-import { appId, secret } from '../../../env';
+import { getToken } from './skyway-auth-token';
 
-const token = new SkyWayAuthToken({
-  jti: uuidV4(),
-  iat: nowInSec(),
-  exp: nowInSec() + 60 * 60 * 24,
-  scope: {
-    app: {
-      id: appId,
-      turn: true,
-      actions: ['read'],
-      channels: [
-        {
-          id: '*',
-          name: '*',
-          actions: ['write'],
-          members: [
-            {
-              id: '*',
-              name: '*',
-              actions: ['write'],
-              publication: {
-                actions: ['write'],
-              },
-              subscription: {
-                actions: ['write'],
-              },
-            },
-          ],
-
-          sfuBots: [
-            {
-              actions: ['write'],
-              forwardings: [{ actions: ['write'] }],
-            },
-          ],
-        },
-      ],
-    },
-  },
-}).encode(secret);
-
-(async () => {
-  const localVideo = document.getElementById('js-local-stream');
-
+void (async () => {
+  const localVideo = document.getElementById(
+    'js-local-stream'
+  );
   const joinTrigger = document.getElementById('js-join-trigger');
   const leaveTrigger = document.getElementById('js-leave-trigger');
   const remoteVideos = document.getElementById('js-remote-streams');
-  const channelName = document.getElementById('js-channel-name');
-
+  const channelName = document.getElementById(
+    'js-channel-name'
+  );
   const roomMode = document.getElementById('js-room-type');
   const messages = document.getElementById('js-messages');
 
-  const getRoomTypeByHash = () => (location.hash === '#sfu' ? 'sfu' : 'p2p');
+  const getRoomTypeByHash = () => location.hash === '#sfu' ? 'sfu' : 'p2p';
   roomMode.textContent = getRoomTypeByHash();
   window.addEventListener('hashchange', () => {
     roomMode.textContent = getRoomTypeByHash();
   });
 
   const { audio, video } =
-    await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
+  await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
 
   // Render local stream
   localVideo.muted = true;
@@ -75,8 +36,9 @@ const token = new SkyWayAuthToken({
   video.attach(localVideo);
   await localVideo.play();
 
+  const token = await getToken('*', '*');
   const context = await SkyWayContext.Create(token, {
-    log: { level: 'warn', format: 'object' },
+    log: { level: 'warn', format: 'object' }
   });
 
   let room;
@@ -89,7 +51,7 @@ const token = new SkyWayAuthToken({
 
     room = await SkyWayRoom.FindOrCreate(context, {
       name: channelName.value,
-      type: getRoomTypeByHash(),
+      type: getRoomTypeByHash()
     });
 
     const member = await room.join();
@@ -141,9 +103,9 @@ const token = new SkyWayAuthToken({
     if (room.type === 'sfu') {
       await member.publish(video, {
         encodings: [
-          { maxBitrate: 10_000, id: 'low' },
-          { maxBitrate: 800_000, id: 'high' },
-        ],
+        { maxBitrate: 10_000, id: 'low' },
+        { maxBitrate: 800_000, id: 'high' }]
+
       });
     } else {
       await member.publish(video);
@@ -161,7 +123,6 @@ const token = new SkyWayAuthToken({
       const remoteVideo = remoteVideos.querySelector(
         `[data-member-id="${e.member.id}"]`
       );
-
       disposeVideoElement(remoteVideo);
 
       messages.textContent += `=== ${e.member.id.slice(0, 5)} left ===\n`;
@@ -172,12 +133,12 @@ const token = new SkyWayAuthToken({
         disposeVideoElement(element);
       });
       messages.textContent += '== You left ===\n';
-      room.dispose();
+      void room.dispose();
       room = undefined;
     });
 
     leaveTrigger.addEventListener('click', () => member.leave(), {
-      once: true,
+      once: true
     });
   });
 })();

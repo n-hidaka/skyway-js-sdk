@@ -1,79 +1,35 @@
 import {
-  nowInSec,
-  SkyWayAuthToken,
+
   SkyWayContext,
   SkyWayRoom,
-  SkyWayStreamFactory,
-  uuidV4,
-} from '@skyway-sdk/room';
+  SkyWayStreamFactory } from
+'@skyway-sdk/room';
 
-import { appId, secret } from '../../../env';
+import { getToken } from './skyway-auth-token';
 
-const token = new SkyWayAuthToken({
-  jti: uuidV4(),
-  iat: nowInSec(),
-  exp: nowInSec() + 60 * 60 * 24,
-  scope: {
-    app: {
-      id: appId,
-      turn: true,
-      actions: ['read'],
-      channels: [
-        {
-          id: '*',
-          name: '*',
-          actions: ['write'],
-          members: [
-            {
-              id: '*',
-              name: '*',
-              actions: ['write'],
-              publication: {
-                actions: ['write'],
-              },
-              subscription: {
-                actions: ['write'],
-              },
-            },
-          ],
-
-          sfuBots: [
-            {
-              actions: ['write'],
-              forwardings: [
-                {
-                  actions: ['write'],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  },
-}).encode(secret);
-
-(async () => {
+void (async () => {
   const localVideo = document.getElementById('local-video');
   const buttonArea = document.getElementById('button-area');
   const remoteMediaArea = document.getElementById('remote-media-area');
-  const roomNameInput = document.getElementById('room-name');
-
+  const roomNameInput = document.getElementById(
+    'room-name'
+  );
   const myId = document.getElementById('my-id');
   const joinButton = document.getElementById('join');
 
   const { audio, video } =
-    await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
+  await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
   video.attach(localVideo);
   await localVideo.play();
 
   joinButton.onclick = async () => {
     if (roomNameInput.value === '') return;
 
+    const token = await getToken('*', '*');
     const context = await SkyWayContext.Create(token);
     const room = await SkyWayRoom.FindOrCreate(context, {
       type: 'p2p',
-      name: roomNameInput.value,
+      name: roomNameInput.value
     });
     const me = await room.join();
 
@@ -90,7 +46,9 @@ const token = new SkyWayAuthToken({
       buttonArea.appendChild(subscribeButton);
 
       subscribeButton.onclick = async () => {
-        const { stream } = await me.subscribe(publication.id);
+        const { stream } = await me.subscribe(
+          publication.id
+        );
 
         let newMedia;
         switch (stream.track.kind) {
@@ -107,7 +65,6 @@ const token = new SkyWayAuthToken({
           default:
             return;
         }
-
         stream.attach(newMedia);
         remoteMediaArea.appendChild(newMedia);
       };

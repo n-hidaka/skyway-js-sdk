@@ -1,70 +1,25 @@
 import {
-  nowInSec,
-  SkyWayAuthToken,
+
   SkyWayChannel,
   SkyWayContext,
-  SkyWayStreamFactory,
-  uuidV4,
-} from '@skyway-sdk/core';
+  SkyWayStreamFactory } from
+'@skyway-sdk/core';
 import { SfuBotMember, SfuBotPlugin } from '@skyway-sdk/sfu-bot';
 
-import { appId, secret } from '../../../env';
+import { getToken } from './skyway-auth-token';
 
-const token = new SkyWayAuthToken({
-  jti: uuidV4(),
-  iat: nowInSec(),
-  exp: nowInSec() + 60 * 60 * 24,
-  scope: {
-    app: {
-      id: appId,
-      turn: true,
-      actions: ['read'],
-      channels: [
-        {
-          id: '*',
-          name: '*',
-          actions: ['write'],
-          members: [
-            {
-              id: '*',
-              name: '*',
-              actions: ['write'],
-              publication: {
-                actions: ['write'],
-              },
-              subscription: {
-                actions: ['write'],
-              },
-            },
-          ],
-
-          sfuBots: [
-            {
-              actions: ['write'],
-              forwardings: [
-                {
-                  actions: ['write'],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  },
-}).encode(secret);
-
-(async () => {
+void (async () => {
   const localVideo = document.getElementById('local-video');
   const buttonArea = document.getElementById('button-area');
   const remoteMediaArea = document.getElementById('remote-media-area');
-  const channelNameInput = document.getElementById('channel-name');
-
+  const channelNameInput = document.getElementById(
+    'channel-name'
+  );
   const myId = document.getElementById('my-id');
   const joinButton = document.getElementById('join');
 
   const { audio, video } =
-    await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
+  await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream();
   video.attach(localVideo);
   await localVideo.play();
 
@@ -72,16 +27,18 @@ const token = new SkyWayAuthToken({
     if (channelNameInput.value === '') return;
 
     const plugin = new SfuBotPlugin();
+    const token = await getToken('*', '*');
     const context = await SkyWayContext.Create(token);
     context.registerPlugin(plugin);
     const channel = await SkyWayChannel.FindOrCreate(context, {
-      name: channelNameInput.value,
+      name: channelNameInput.value
     });
     if (channel.bots.length === 0) {
       await plugin.createBot(channel);
     }
 
-    const bot = channel.bots[0] ?? (await plugin.createBot(channel));
+    const bot = channel.bots[0] ?? (
+    await plugin.createBot(channel));
 
     const me = await channel.join();
 
@@ -94,18 +51,18 @@ const token = new SkyWayAuthToken({
     {
       const publication = await me.publish(video, {
         encodings: [
-          { maxBitrate: 80_000, id: 'low' },
-          { maxBitrate: 400_000, id: 'high' },
-        ],
+        { maxBitrate: 80_000, id: 'low' },
+        { maxBitrate: 400_000, id: 'high' }]
+
       });
       await bot.startForwarding(publication);
     }
 
     const createSubscribeButton = (publication) => {
       if (
-        publication.publisher.subtype !== SfuBotMember.subtype ||
-        publication.origin.publisher.id === me.id
-      ) {
+      publication.publisher.subtype !== SfuBotMember.subtype ||
+      publication.origin.publisher.id === me.id)
+      {
         return;
       }
 
